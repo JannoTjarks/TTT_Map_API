@@ -17,6 +17,7 @@ namespace TTT_Map_API
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            Database.DataSource = Configuration["DatabaseUri"];
         }
 
         public IConfiguration Configuration { get; }

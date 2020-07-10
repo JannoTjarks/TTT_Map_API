@@ -17,24 +17,25 @@ namespace TTT_Map_API.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<TableContent>> Get()
         {
+            var database = Database.GetInstance();
             var tableContent = new List<TableContent>();            
-            foreach (var mapName in Database.GetAllMapNames())
+            foreach (var mapName in database.GetAllMapNames())
             {
-                tableContent.Add(new TableContent(mapName, Database.GetMapAverageRating(Database.GetMapIdByName(mapName))));
+                tableContent.Add(new TableContent(mapName, database.GetMapAverageRating(database.GetMapIdByName(mapName))));
             }
 
             return tableContent;
         }
 
         // GET api/map_ratings/ttt_skyscraper
-        [HttpGet("{mapName}")]
-        public ActionResult<IEnumerable<TableContent>> Get(string mapName)
-        {
-            var tableContent = new List<TableContent>();
-            tableContent.Add(new TableContent(mapName, Database.GetMapAverageRating(Database.GetMapIdByName(mapName))));
+        //[HttpGet("{mapName}")]
+        //public ActionResult<IEnumerable<TableContent>> Get(string mapName)
+        //{
+        //    var tableContent = new List<TableContent>();
+        //    tableContent.Add(new TableContent(mapName, Database.GetMapAverageRating(Database.GetMapIdByName(mapName))));
 
-            return tableContent;
-        }
+        //    return tableContent;
+        //}
 
         // POST api/values
         //[HttpPost]

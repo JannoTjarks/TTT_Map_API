@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using Microsoft.AspNetCore.Routing;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,21 +9,34 @@ using TTT_Map_API.Structs;
 namespace TTT_Map_API
 {
     public class Database
-    {        
-        static string databaseSource = "Data Source=C:\\Users\\Janno\\Desktop\\TTT_Map_Rating.db";
-        static SqliteConnection connection = new SqliteConnection(databaseSource);
+    {
+        public static string DataSource { get; set; }
 
-        static void OpenConnection()
+        private static Database _instance = null;
+        private SqliteConnection connection = null;        
+
+        public static Database GetInstance()
+        {
+            if (_instance == null)
+            {
+                _instance = new Database();
+                _instance.connection = new SqliteConnection(DataSource);                
+            }
+
+            return _instance; 
+        }
+
+        private void OpenConnection()
         {
             connection.Open();            
         } 
 
-        static void CloseConnection()
+        private void CloseConnection()
         {
             connection.Close();
         }
       
-        public static List<string> GetAllMapNames()
+        public List<string> GetAllMapNames()
         {
             var maps = new List<string>();
 
@@ -48,7 +62,7 @@ namespace TTT_Map_API
             return maps;
         }
 
-        public static long GetMapIdByName(string mapName)
+        public long GetMapIdByName(string mapName)
         {
             long mapId = 0;
 
@@ -78,7 +92,7 @@ namespace TTT_Map_API
             return mapId;
         }
 
-        public static string GetMapNameById(long mapId)
+        public string GetMapNameById(long mapId)
         {
             string mapName = "";
 
@@ -108,7 +122,7 @@ namespace TTT_Map_API
             return mapName;
         }
 
-        public static int GetMapAverageRating(long mapId)
+        public int GetMapAverageRating(long mapId)
         {
             var ratings = new List<int>();
 
