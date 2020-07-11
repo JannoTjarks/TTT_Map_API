@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Routing;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,34 +12,32 @@ namespace TTT_Map_API
         public static string DataSource { get; set; }
 
         private static Database _instance = null;
-        private SqliteConnection connection = null;        
+        private SqliteConnection connection = null;
 
         public static Database GetInstance()
         {
             if (_instance == null)
             {
                 _instance = new Database();
-                _instance.connection = new SqliteConnection(DataSource);                
+                _instance.connection = new SqliteConnection(DataSource);
             }
 
-            return _instance; 
+            return _instance;
         }
 
-        private void OpenConnection()
+        public void OpenConnection()
         {
-            connection.Open();            
-        } 
+            connection.Open();
+        }
 
-        private void CloseConnection()
+        public void CloseConnection()
         {
             connection.Close();
         }
-      
+
         public List<string> GetAllMapNames()
         {
             var maps = new List<string>();
-
-            OpenConnection();
 
             var command = connection.CreateCommand();
             command.CommandText =
@@ -57,17 +54,12 @@ namespace TTT_Map_API
                 }
             }
 
-            CloseConnection();
-
             return maps;
         }
 
         public long GetMapIdByName(string mapName)
         {
-            long mapId = 0;
-
-            OpenConnection();
-
+            long result = -1;
             var command = connection.CreateCommand();
             command.CommandText =
             @"
@@ -79,24 +71,17 @@ namespace TTT_Map_API
 
             command.Parameters.AddWithValue("$mapName", mapName);
 
-            using (var reader = command.ExecuteReader())
+            if (command.ExecuteScalar() != null)
             {
-                while (reader.Read())
-                {
-                    mapId = reader.GetInt64(0);
-                }
+                Int64.TryParse(command.ExecuteScalar().ToString(), out result);
             }
 
-            CloseConnection();
-
-            return mapId;
+            return result;
         }
 
         public string GetMapNameById(long mapId)
         {
             string mapName = "";
-
-            OpenConnection();
 
             var command = connection.CreateCommand();
             command.CommandText =
@@ -117,16 +102,12 @@ namespace TTT_Map_API
                 }
             }
 
-            CloseConnection();
-
             return mapName;
         }
 
         public int GetMapAverageRating(long mapId)
         {
             var ratings = new List<int>();
-
-            connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText =
@@ -149,8 +130,6 @@ namespace TTT_Map_API
                 }
             }
 
-            CloseConnection();
-
             var sumOfRatingValues = 0;
             foreach (var rating in ratings)
             {
@@ -158,6 +137,111 @@ namespace TTT_Map_API
             }
 
             return sumOfRatingValues / ratings.Count;
+        }
+
+        public bool InsertRating(Rating rating)
+        {
+            if (isUserIdPresent(rating.User))
+            {
+                var mapId = GetMapIdByName(rating.Map);
+                if (mapId == -1)
+                {
+                    var command = connection.CreateCommand();
+                    command.CommandText =
+                    @"
+                        INSERT INTO Map (map_name) 
+                        VALUES ($map_name);
+                    ";
+
+                    command.Parameters.AddWithValue("$map_name", rating.Map);
+
+                    command.ExecuteNonQuery();
+
+                    mapId = GetMapIdByName(rating.Map);
+                }
+
+                var ratingId = isUserRatingAlreadyPresent(rating.User, mapId);
+                if (ratingId == -1)
+                {
+                    var command = connection.CreateCommand();
+                    command.CommandText =
+                    @"
+                            INSERT INTO Rating (rating_value, map_id, user_id)
+                            VALUES ($rating_value, $map_id, $user_id); 
+                        ";
+
+                    command.Parameters.AddWithValue("$rating_value", rating.Value);
+                    command.Parameters.AddWithValue("$map_id", mapId);
+                    command.Parameters.AddWithValue("$user_id", rating.User);
+
+                    command.ExecuteNonQuery();
+                }
+                else
+                {
+                    var command = connection.CreateCommand();
+                    command.CommandText =
+                    @"
+                            UPDATE Rating 
+                            SET rating_value = $rating_value
+                            WHERE rating_id = $rating_id;
+                        ";
+
+                    command.Parameters.AddWithValue("$rating_value", rating.Value);
+                    command.Parameters.AddWithValue("$rating_id", ratingId);
+
+                    command.ExecuteNonQuery();
+                }
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool isUserIdPresent(string userId)
+        {
+            var command = connection.CreateCommand();
+            command.CommandText =
+            @"
+                SELECT user_id 
+                FROM User 
+                WHERE user_id LIKE $user_id;
+            ";
+
+            command.Parameters.AddWithValue("$user_id", userId);
+
+            if (command.ExecuteScalar() != null)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public long isUserRatingAlreadyPresent(string userId, long mapId)
+        {
+            long result = -1;
+            var command = connection.CreateCommand();
+            command.CommandText =
+            @"
+                SELECT rating_id 
+                FROM Rating 
+                WHERE user_id LIKE $user_id
+	                AND 
+	                map_id = $map_id;
+            ";
+
+            command.Parameters.AddWithValue("$user_id", userId);
+            command.Parameters.AddWithValue("$map_id", mapId);
+
+            if (command.ExecuteScalar() != null)
+            {
+                Int64.TryParse(command.ExecuteScalar().ToString(), out result);
+            }
+
+            return result;
         }
     }
 }
