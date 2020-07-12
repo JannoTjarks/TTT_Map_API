@@ -20,7 +20,6 @@ namespace TTT_Map_API
             Program.ListenIp = Configuration["ListenIp"];
             Program.ListenPort = Convert.ToInt32(Configuration["ListenPort"]);
             Database.DataSource = Configuration["DatabaseUri"];
-
         }
 
         public IConfiguration Configuration { get; }

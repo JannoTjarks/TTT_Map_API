@@ -20,8 +20,7 @@ namespace TTT_Map_API
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            //return Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+        {          
             return Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>().UseKestrel(options => { options.Listen(System.Net.IPAddress.Parse(ListenIp), ListenPort); }); });
         }
     }
