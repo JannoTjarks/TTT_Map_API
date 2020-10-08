@@ -9,14 +9,14 @@ namespace TTT_Map_API.Structs
     public class TableContent
     {
         [JsonConstructor]
-        public TableContent(string name, int rating)
+        public TableContent(string name, float rating)
         {
             Name = name;
             Rating = rating;
         }
 
         public string Name { get; }
-        public int Rating { get; }
+        public float Rating { get; }
 
         public override string ToString() => $"({Name}, {Rating})";
     }

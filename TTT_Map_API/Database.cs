@@ -105,9 +105,10 @@ namespace TTT_Map_API
             return mapName;
         }
 
-        public int GetMapAverageRating(long mapId)
+        public float GetMapAverageRating(long mapId)
         {
             var ratings = new List<int>();
+            float count = 0;
 
             var command = connection.CreateCommand();
             command.CommandText =
@@ -130,13 +131,19 @@ namespace TTT_Map_API
                 }
             }
 
-            var sumOfRatingValues = 0;
-            foreach (var rating in ratings)
+            float sumOfRatingValues = 0;
+            foreach (float rating in ratings)
             {
                 sumOfRatingValues += rating;
             }
 
-            return sumOfRatingValues / ratings.Count;
+            if (ratings.Count != 0)
+            {
+                return sumOfRatingValues / ratings.Count;
+            }
+
+            return 0;
+            
         }
 
         public bool InsertRating(Rating rating)
@@ -144,21 +151,6 @@ namespace TTT_Map_API
             if (isUserIdPresent(rating.User))
             {
                 var mapId = GetMapIdByName(rating.Map);
-                if (mapId == -1)
-                {
-                    var command = connection.CreateCommand();
-                    command.CommandText =
-                    @"
-                        INSERT INTO Map (map_name) 
-                        VALUES ($map_name);
-                    ";
-
-                    command.Parameters.AddWithValue("$map_name", rating.Map);
-
-                    command.ExecuteNonQuery();
-
-                    mapId = GetMapIdByName(rating.Map);
-                }
 
                 var ratingId = isUserRatingAlreadyPresent(rating.User, mapId);
                 if (ratingId == -1)
